@@ -522,6 +522,7 @@ interface(`container_filetrans_named_content',`
     files_var_lib_filetrans($1, container_ro_file_t, dir, "kata-containers")
     files_var_lib_filetrans($1, container_var_lib_t, dir, "containerd")
     files_var_lib_filetrans($1, container_var_lib_t, dir, "buildkit")
+    files_var_lib_filetrans($1, container_ro_file_t, dir, "shared")
 
     filetrans_pattern($1, container_var_lib_t, container_file_t, dir, "_data")
     filetrans_pattern($1, container_var_lib_t, container_ro_file_t, file, "config.env")
@@ -572,7 +573,7 @@ interface(`container_filetrans_named_content',`
     filetrans_pattern($1, container_var_lib_t, container_ro_file_t, dir, "kata-containers")
     filetrans_pattern($1, data_home_t, container_ro_file_t, dir, "kata-containers")
     filetrans_pattern($1, container_var_run_t, container_runtime_tmpfs_t, dir, "shm")
-    files_pid_filetrans($1, kubernetes_file_t, dir, "kubernetes")
+    files_etc_filetrans($1, kubernetes_file_t, dir, "kubernetes")
 ')
 
 ########################################
@@ -887,6 +888,7 @@ template(`container_domain_template',`
 	type $1_t, container_domain;
 	domain_type($1_t)
 	domain_user_exemption_target($1_t)
+	allow $1_t $2_file_t:file entrypoint;
 
 	container_manage_files_template($1, $2)
 ')
@@ -929,7 +931,7 @@ template(`container_manage_files_template',`
 	manage_lnk_files_pattern($1_t, $2_file_t, $2_file_t)
 	manage_dirs_pattern($1_t, $2_file_t, $2_file_t)
 	manage_chr_files_pattern($1_t, $2_file_t, $2_file_t)
-	allow $1_t $2_file_t:chr_file mmap_file_perms;
+	allow $1_t $2_file_t:chr_file { mmap_file_perms watch watch_reads };
 	manage_blk_files_pattern($1_t, $2_file_t, $2_file_t)
 	manage_fifo_files_pattern($1_t, $2_file_t, $2_file_t)
 	manage_sock_files_pattern($1_t, $2_file_t, $2_file_t)
@@ -996,7 +998,6 @@ interface(`container_kubelet_domtrans',`
 interface(`container_kubelet_run',`
 	gen_require(`
 		type kubelet_t;
-		class dbus send_msg;
 	')
 
 	container_kubelet_domtrans($1)
